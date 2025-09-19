@@ -1,0 +1,43 @@
+bomFormat: CycloneDX
+specVersion: "1.6"
+metadata:
+  component:
+    type: application
+    mime-type: application/vnd.qubership.application
+    name: qubership-integration-platform
+    version: "1.0.0"
+  tools:
+    components:
+      - type: application
+        name: sbom-generator
+        version: "2.3.1"
+components:
+  - name: qubership-logging-ui
+    mime-type: application/vnd.docker.image
+    version: 1.0.0
+    purl: ghcr.io/nookyo/qubership-logging-ui:1.0.0
+    dependsOn:
+      - name: qubership-logging-integration-tests
+        mime-type: application/vnd.docker.image
+        valuesPathPrefix: uiTests
+  - name: qubership-logging-integration-tests
+    mime-type: application/vnd.docker.image
+  - name: patroni-core
+    mime-type: application/vnd.qubership.helm.chart
+    dependsOn:
+      - name: qubership-logging-integration-tests
+        mime-type: application/vnd.docker.image
+        valuesPathPrefix: integrationTests
+      - name: patroni-services
+        mime-type: application/vnd.qubership.helm.chart
+      - name: qubership-logging-ui
+        mime-type: application/vnd.docker.image
+        valuesPathPrefix: ui
+  - name: patroni-services
+    mime-type: application/vnd.qubership.helm.chart
+    dependsOn:
+      - name: qubership-logging-integration-tests
+        mime-type: application/vnd.docker.image
+      - name: qubership-logging-ui
+        mime-type: application/vnd.docker.image
+        valuesPathPrefix: ui
