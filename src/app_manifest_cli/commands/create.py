@@ -12,7 +12,7 @@ def get_timestamp() -> str:
     return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
 
-def get_boom_ref(name: str) -> str:
+def get_bom_ref(name: str) -> str:
     return f"{name}:{uuid.uuid4()}"
 
 
@@ -40,7 +40,7 @@ def create_command(
         "metadata": {
             "timestamp": get_timestamp(),
             "component": {
-                "bom-ref": get_boom_ref(name),
+                "bom-ref": get_bom_ref(name),
                 "type": "application",
                 "mime-type": "application/vnd.qubership.application",
                 "name": name,

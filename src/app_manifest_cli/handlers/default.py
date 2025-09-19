@@ -1,3 +1,3 @@
 def handle(obj: dict) -> dict:
     print("Running default handler")
-    return obj
+    return {"strategy": "default", "data": obj}

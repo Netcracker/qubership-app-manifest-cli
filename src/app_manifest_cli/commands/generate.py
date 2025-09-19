@@ -1,8 +1,9 @@
 import json, yaml, sys, typer
 from ..commands.create import create_command
-from ..commands.create import get_boom_ref
+from ..commands.create import get_bom_ref
 from ..services.components import add_component as _add_component
 from ..services.dependencies import add_dependency as _add_dependency
+from ..services.standalone_runnable import discover_standalone_runnable_component
 from pathlib import Path
 from typing import List
 def generate_command(
@@ -13,14 +14,15 @@ def generate_command(
     ),
     version: str = typer.Option("", "--version", help="Application version"),
     out: str | None = typer.Option(None, "--out", "-o", help="Output file (default: stdout)"),
-    discovery: bool = typer.Option(False, "--discovery", help="Enable component discovery")
+    discovery: bool = typer.Option(False, "--discovery", help="Enable component discovery"),
+    resources_dir: str | None = typer.Option(None, "--resources-dir", help="Directory with resource files"),
 ) -> None:
     configuration_data = load_configuration(configuration)
     if version == "" and "version" in configuration_data.get("metadata", {}).get("component", {}):
         version = configuration_data["metadata"]["component"]["version"]
     body = create_command(name=name, version=version, out=open(out, "w"))
     # Получаю компоненты из конфига -- именно они определяют состав манифеста
-    config_components = configuration_data.get("components", [])
+    config_components = get_components_from_data(configuration_data)
     # Получаю депенденси из конфига
     config_dependencies = load_dependencies(config_components)
     # Читаю все json файлы с компонентами
@@ -37,7 +39,7 @@ def generate_command(
             if conf_comp["name"] == json_comp["name"] and conf_comp["mime-type"] == json_comp["mime-type"]:
                 conf_comp.update(json_comp)
         if "bom-ref" not in conf_comp:
-            conf_comp["bom-ref"] = get_boom_ref(conf_comp["name"])
+            conf_comp["bom-ref"] = get_bom_ref(conf_comp["name"])
         components.append(conf_comp)
 
     # Генерирую дополнительные метаданные для helm chart
@@ -49,6 +51,13 @@ def generate_command(
     for comp in components:
         # Удаляю dependsOn, чтобы не было в манифесте
         comp.pop("dependsOn", None)
+        if comp.get("mime-type") == "application/vnd.qubership.standalone-runnable":
+            if resources_dir is None:
+                raise ValueError("When component with mime-type 'application/vnd.qubership.standalone-runnable' provided in configuration, --resources-dir must be specified")
+            comp = discover_standalone_runnable_component(comp, resources_dir)
+
+        typer.echo(f"Adding component: {comp['name']} with mime-type: {comp['mime-type']}")
+        typer.echo(f"comp details: {json.dumps(comp, indent=2)}")
         _add_component(manifest_path=out, payload_text=json.dumps(comp), out_file=None)
     # Формирую простой список компонент для удобства поиска
     components_list = [ comp["mime-type"] + ":" + comp["name"] for comp in components]
@@ -107,9 +116,9 @@ def load_dependencies(config_data: dict) -> List:
             for dep in comp['dependsOn']:
                 if 'name' not in dep:
                     raise ValueError("Each dependency must have a 'name' field")
-                if 'mime-type' not in dep:
-                    raise ValueError("Each dependency must have a 'mime-type' field")
-                deps_elem_depends_on.append(f"{dep['mime-type']}:{dep['name']}")
+                if 'mime-type' not in dep and 'mimeType' not in dep:
+                    raise ValueError("Each dependency must have a 'mime-type' or 'mimeType' field")
+                deps_elem_depends_on.append(f"{dep.get('mimeType',dep.get('mime-type'))}:{dep['name']}")
             deps.append({"name": deps_elem_name, "ref": deps_elem_ref, "dependsOn": deps_elem_depends_on})
     return deps
 
@@ -134,16 +143,36 @@ def generate_helm_values_artifact_mappings(manifest_components: List[dict]) -> d
         artifact_mappings = {}
         for dep in component["dependsOn"]:
             if "valuesPathPrefix" in dep:
+                dep_name = dep.get("name")
+                dep_mime = dep.get("mimeType", dep.get("mime-type"))
                 # Ищу в manifest_components компонент с таким же name и mime-type, чтобы взять его bom-ref
-                matching_comp = next((comp for comp in manifest_components if comp["name"] == dep["name"] and comp["mime-type"] == dep["mime-type"]), None)
-                print(f"  Processing dependency: {dep.get('name')}, found matching component: {matching_comp is not None}")
+                matching_comp = next((comp for comp in manifest_components if comp["name"] == dep_name and comp["mime-type"] == dep_mime), None)
+                print(f"  Processing dependency: {dep_name}, found matching component: {matching_comp is not None}")
                 if matching_comp and "bom-ref" in matching_comp:
                     artifact_mappings[matching_comp["bom-ref"]] = {"valuesPathPrefix": dep["valuesPathPrefix"]}
                 else:
-                    raise ValueError(f"Dependency '{dep['name']}' with mime-type '{dep['mime-type']}' not found in manifest components or missing bom-ref")
+                    raise ValueError(f"Dependency '{dep_name}' with mime-type '{dep_mime}' not found in manifest components or missing bom-ref")
         if artifact_mappings:
             if "properties" not in component:
                 component["properties"] = []
             component["properties"].append({"name": "qubership:helm.values.artifactMappings", "value": artifact_mappings})
         components.append(component)
+    return components
+
+def get_components_from_data(data: dict) -> List[dict]:
+    if "components" not in data:
+        return []
+    components = []
+    for comp in data["components"]:
+        if "name" not in comp or ("mime-type" not in comp and "mimeType" not in comp):
+            raise ValueError("Each component must have 'name' and 'mime-type/mimeType' fields")
+        mime_type = comp.get("mimeType",comp.get("mime-type"))
+        components.append({
+            "name": comp["name"],
+            "mime-type": mime_type,
+            "version": comp.get("version", ""),
+            "properties": comp.get("properties", []),
+            "purl": comp.get("purl", ""),
+            "dependsOn": comp.get("dependsOn", [])
+        })
     return components
