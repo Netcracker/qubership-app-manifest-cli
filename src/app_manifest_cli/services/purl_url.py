@@ -1,61 +1,87 @@
-def purl_2_url(purl: str) -> str:
+# pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]#[SUBPATH]
+#
+# `pkg:` - обязательный префикс, указывающий что это Package URL
+# `TYPE`- тип пакета/артефакта (docker, helm, github)
+# `NAMESPACE` - группа/организация
+# `NAME` - имя пакета/артефакта
+# `@VERSION` - версия
+# `?QUALIFIERS` - дополнительные параметры
+# `#SUBPATH` - подпуть к файлу
+import yaml
+from typing import List
+
+def purl_2_url(purl: str, reg_config: str) -> str:
     """
     Converts a Package URL (purl) to a standard URL.
     For example, converts 'pkg:helm/bitnami/nginx?version=1.2.3' to 'https://charts.bitnami.com/bitnami/nginx-1.2.3.tgz'
     """
-    if not purl.startswith("pkg:helm/"):
-        raise ValueError("Only helm purls are supported")
-    # Remove 'pkg:helm/' prefix
-    purl_body = purl[len("pkg:helm/"):]
-    # Split by '?', to separate version if present
-    if '?' in purl_body:
-        name_part, query_part = purl_body.split('?', 1)
-        query_params = dict(param.split('=') for param in query_part.split('&'))
-        version = query_params.get('version', '')
-    else:
-        name_part = purl_body
-        version = ''
-    # Split name_part by '/', to get repo and chart name
-    parts = name_part.split('/')
-    if len(parts) != 2:
-        raise ValueError("Purl must be in the format 'pkg:helm/repo/chartname'")
-    repo, chart_name = parts
-    # Construct URL
-    base_url = f"https://charts.{repo}.com/{repo}"
-    if version:
-        url = f"{base_url}/{chart_name}-{version}.tgz"
-    else:
-        url = f"{base_url}/{chart_name}.tgz"
-    return url
+    package_type = purl.split('/')[0].split(':')[1]
+    if package_type not in ["helm", "docker", "github"]:
+        raise ValueError(f"Unsupported package type: {package_type}")
+    if package_type == "helm":
+        return helm_purl_2_url(purl, reg_config)
+    if package_type == "docker":
+        return docker_purl_2_url(purl, reg_config)
+    if package_type == "github":
+        return github_purl_2_url(purl, reg_config)
 
-def url_2_purl(url: str) -> str:
+def docker_purl_2_url(purl: str, reg_config: str) -> str:
     """
-    Converts a standard URL to a Package URL (purl).
-    For example, converts 'https://charts.bitnami.com/bitnami/nginx-1.2.3.tgz' to 'pkg:helm/bitnami/nginx?version=1.2.3'
+    Converts a Docker Package URL (purl) to a standard URL.
+    For example, converts 'pkg:docker/library/nginx@1.19.0'
+    to 'https://hub.docker.com/v2/repositories/library/nginx/tags/1.19.0'
     """
-    if not url.startswith("https://charts."):
-        raise ValueError("Only helm chart URLs are supported")
-    # Remove 'https://charts.' prefix
-    url_body = url[len("https://charts."):]
-    # Split by '/', to separate repo and chart
-    parts = url_body.split('/')
-    if len(parts) < 2:
-        raise ValueError("URL must be in the format 'https://charts.repo.com/repo/chartname-version.tgz'")
-    repo = parts[0].split('.')[0]  # Extract repo from domain
-    chart_part = parts[-1]  # Last part is chartname-version.tgz
-    if not chart_part.endswith('.tgz'):
-        raise ValueError("Chart URL must end with .tgz")
-    chart_name_version = chart_part[:-len('.tgz')]  # Remove .tgz suffix
-    # Split chart_name_version by last '-', to separate name and version
-    if '-' in chart_name_version:
-        last_dash_index = chart_name_version.rfind('-')
-        chart_name = chart_name_version[:last_dash_index]
-        version = chart_name_version[last_dash_index + 1:]
+
+    # Remove 'pkg:docker/' prefix
+    purl_body = purl[len("pkg:docker/"):]
+
+    # Split by '#' to get subpath if present
+    if '#' in purl_body:
+        purl_body, subpath = purl_body.split('#', 1)
     else:
-        chart_name = chart_name_version
-        version = ''
-    # Construct purl
-    purl = f"pkg:helm/{repo}/{chart_name}"
-    if version:
-        purl += f"?version={version}"
-    return purl
+        subpath = None
+    # Split by '?' to get qualifiers if present
+    if '?' in purl_body:
+        purl_body, qualifiers = purl_body.split('?', 1)
+    else:
+        qualifiers = None
+    # Split by '@' to get version if present
+    if '@' in purl_body:
+        purl_body, version = purl_body.split('@', 1)
+    else:
+        version = 'latest'
+    # Split by '/' to get name and namespace
+    name, namespace = purl_body.split('/', 1)
+    # Get the registry from qualifiers if present
+    registry_id = ''
+    if qualifiers:
+        for qual in qualifiers.split('&'):
+            if qual.startswith('registryName='):
+                registry_id = qual.split('=')[1]
+                break
+    if registry_id == '':
+        raise ValueError("Docker purl must have registryName qualifier")
+    reg_config_data, reg_auth_data = get_registry(registry_id, reg_config, 'docker')
+
+    # Construct URL
+    return f"https://{reg_config_data['url']}/v2/repositories/{namespace}/{name}/tags/{version}"
+
+def get_registry(registry_id: str, reg_config: str, reg_type: str) -> any:
+    with open(reg_config, "r") as f:
+        reg_data = yaml.safe_load(f)
+    if f'{reg_type}Config' not in reg_data:
+        raise ValueError(f"Registry {registry_id} must have {reg_type}Config section in registry config")
+    reg_config_data = reg_data[f'{reg_type}Config']
+    reg_auth_data = reg_data.get('authConfig', {}).get(reg_config_data.get('auth', ''), {})
+
+    return reg_config_data, reg_auth_data
+
+def helm_purl_2_url(purl: str, reg_config: str) -> str:
+    """
+    Converts a Helm Package URL (purl) to a standard URL.
+    For example, converts 'pkg:helm/bitnami/nginx?version=1.2.3' to 'https://charts.bitnami.com/bitnami/nginx-1.2.3.tgz'
+    """
+    return "https://example.com/chart.tgz"
+
+def github_purl_2_url(purl: str, reg_config: str) -> str:
+    return "https://github.com/owner/repo/repo.tar.gz"
