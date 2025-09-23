@@ -21,27 +21,18 @@ components:
         mimeType: application/vnd.docker.image
   - name: qubership-logging-integration-tests
     mimeType: application/vnd.docker.image
-  - name: patroni-core
+  - name: airflow
     mimeType: application/vnd.qubership.helm.chart
+    purl: https://github.com/Netcracker/qubership-airflow/releases/download/2.0.1/airflow-1.19.0-dev.tgz
     dependsOn:
       - name: qubership-logging-integration-tests
         mimeType: application/vnd.docker.image
         valuesPathPrefix: integrationTests
-      - name: patroni-services
-        mimeType: application/vnd.qubership.helm.chart
-      - name: qubership-logging-ui
-        mimeType: application/vnd.docker.image
-        valuesPathPrefix: ui
-  - name: patroni-services
-    mimeType: application/vnd.qubership.helm.chart
-    dependsOn:
-      - name: qubership-logging-integration-tests
-        mimeType: application/vnd.docker.image
       - name: qubership-logging-ui
         mimeType: application/vnd.docker.image
         valuesPathPrefix: ui
   - name: patroni
     mimeType: application/vnd.qubership.standalone-runnable
     dependsOn:
-      - name: patroni-services
+      - name: airflow
         mimeType: application/vnd.qubership.helm.chart

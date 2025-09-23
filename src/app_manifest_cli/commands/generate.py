@@ -3,19 +3,22 @@ from ..commands.create import create_command
 from ..commands.create import get_bom_ref
 from ..services.components import add_component as _add_component
 from ..services.dependencies import add_dependency as _add_dependency
-from ..services.standalone_runnable import discover_standalone_runnable_component
+#from ..services.resource_profile_baseline import discover_standalone_runnable_component
+from ..services.helm_discovery import helm_discovery
 from pathlib import Path
 from typing import List
+from typing import Optional
+
 def generate_command(
     components_files: List[Path] = typer.Argument(None, min=0, help="One or more file paths to process"),
-    configuration: str | None = typer.Option(None, "--config", "-c"),
+    configuration: Optional[str] = typer.Option(None, "--config", "-c"),
     name: str = typer.Option(
         "qubership-integration-platform", "--name", help="Application name"
     ),
     version: str = typer.Option("", "--version", help="Application version"),
-    out: str | None = typer.Option(None, "--out", "-o", help="Output file (default: stdout)"),
+    out: Optional[str] = typer.Option(None, "--out", "-o", help="Output file (default: stdout)"),
     discovery: bool = typer.Option(False, "--discovery", help="Enable component discovery"),
-    resources_dir: str | None = typer.Option(None, "--resources-dir", help="Directory with resource files"),
+    resources_dir: Optional[str] = typer.Option(None, "--resources-dir", help="Directory with resource files"),
 ) -> None:
     configuration_data = load_configuration(configuration)
     if version == "" and "version" in configuration_data.get("metadata", {}).get("component", {}):
@@ -47,14 +50,18 @@ def generate_command(
     #   и значением в виде dict, где ключ - bom-ref зависимости, а значение - dict с ключом valuesPathPrefix и значением из конфигурации
 
     components = generate_helm_values_artifact_mappings(components)
+    # Если включено discovery, то запускаю его
+    # дополняя компоненты зависимостями и свойствами
+    if discovery:
+        components = helm_discovery(components)
     # Добавляю все компоненты в манифест
     for comp in components:
         # Удаляю dependsOn, чтобы не было в манифесте
         comp.pop("dependsOn", None)
-        if comp.get("mime-type") == "application/vnd.qubership.standalone-runnable":
-            if resources_dir is None:
-                raise ValueError("When component with mime-type 'application/vnd.qubership.standalone-runnable' provided in configuration, --resources-dir must be specified")
-            comp = discover_standalone_runnable_component(comp, resources_dir)
+        # if comp.get("mime-type") == "application/vnd.qubership.standalone-runnable":
+        #     if resources_dir is None:
+        #         raise ValueError("When component with mime-type 'application/vnd.qubership.standalone-runnable' provided in configuration, --resources-dir must be specified")
+        #     comp = discover_standalone_runnable_component(comp, resources_dir)
 
         typer.echo(f"Adding component: {comp['name']} with mime-type: {comp['mime-type']}")
         typer.echo(f"comp details: {json.dumps(comp, indent=2)}")
