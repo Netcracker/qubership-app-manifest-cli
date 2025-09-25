@@ -5,7 +5,7 @@ import sys
 import yaml
 from typing import List
 from ..commands.create import get_bom_ref
-from ..services.purl_url import purl_2_url, url_2_purl
+from ..services.purl_url import url_2_purl
 # Здесь должны быть методы для работы с helm chart
 # для генерации дополнительных метаданных
 # На входе получаем url чарта
@@ -67,21 +67,21 @@ def helm_discovery(components: List) -> List:
     for comp in components:
         if comp.get("mime-type") != "application/vnd.qubership.helm.chart":
             continue
-        if not comp['purl']:
-            raise ValueError("Helm chart component must have purl")
+        if not comp['reference']:
+            raise ValueError("Helm chart component must have reference")
         # Тут должна быть логика скачивания чарта по purl, распаковки и чтения файлов
-        chart_url = purl_2_url(comp["purl"])
-        print(f"Discovering helm chart: {comp['name']} with purl: {comp['purl']}")
+        chart_url = comp["reference"]
+        print(f"Discovering helm chart: {comp['name']} with reference: {comp['reference']}")
         try:
             chart = subprocess.run(f"helm pull --untar --untardir {comp['name']} {chart_url}", shell=True, text=True, check=True, capture_output=True).stdout.split()
         except subprocess.CalledProcessError as e:
-            raise ValueError(f"Error pulling chart for {comp['name']} with purl: {comp['purl']}. Error: {e.stderr}")
+            raise ValueError(f"Error pulling chart for {comp['name']} with reference: {comp['reference']}. Error: {e.stderr}")
         chart_file_path = os.path.join(comp['name'], comp['name'], "Chart.yaml")
         if not os.path.isfile(chart_file_path):
             raise ValueError(f"Chart.yaml not found in pulled chart for {comp['name']}")
         with open(chart_file_path, 'r') as f:
             chart_info = yaml.safe_load(f)
-        print(f"Chart info: {chart_info}")
+        #print(f"Chart info: {chart_info}")
         if chart_info.get("type") == "library":
             if "properties" not in comp:
                 comp["properties"] = []

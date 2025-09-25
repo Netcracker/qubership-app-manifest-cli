@@ -3,6 +3,7 @@ from ..commands.create import create_command
 from ..commands.create import get_bom_ref
 from ..services.components import add_component as _add_component
 from ..services.dependencies import add_dependency as _add_dependency
+from ..services.purl_url import url_2_purl
 #from ..services.resource_profile_baseline import discover_standalone_runnable_component
 from ..services.helm_discovery import helm_discovery
 from pathlib import Path
@@ -63,7 +64,7 @@ def generate_command(
         #     comp = discover_standalone_runnable_component(comp, resources_dir)
 
         typer.echo(f"Adding component: {comp['name']} with mime-type: {comp['mime-type']}")
-        typer.echo(f"comp details: {json.dumps(comp, indent=2)}")
+        #typer.echo(f"comp details: {json.dumps(comp, indent=2)}")
         _add_component(manifest_path=out, payload_text=json.dumps(comp), out_file=None)
     # Формирую простой список компонент для удобства поиска
     components_list = [ comp["mime-type"] + ":" + comp["name"] for comp in components]
@@ -178,7 +179,8 @@ def get_components_from_data(data: dict) -> List[dict]:
             "mime-type": mime_type,
             "version": comp.get("version", ""),
             "properties": comp.get("properties", []),
-            "purl": comp.get("purl", ""),
+            "purl": url_2_purl(comp.get("reference"), mime_type),
+            "reference": comp.get("reference", ""),
             "dependsOn": comp.get("dependsOn", [])
         })
     return components

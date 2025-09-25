@@ -21,6 +21,7 @@ components:
         mimeType: application/vnd.docker.image
   - name: qubership-logging-integration-tests
     mimeType: application/vnd.docker.image
+    reference: ghcr.io/netcracker/qubership-logging-integration-tests:1.0.0
   - name: airflow
     mimeType: application/vnd.qubership.helm.chart
     reference: https://github.com/borislavr/pgskipper-operator/releases/download/v0.0.0/airflow-1.19.0-dev.tgz
