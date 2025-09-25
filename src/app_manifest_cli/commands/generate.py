@@ -1,4 +1,4 @@
-import json, yaml, sys, typer
+import json, yaml, typer
 from ..commands.create import create_command
 from ..commands.create import get_bom_ref
 from ..services.components import add_component as _add_component
