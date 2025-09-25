@@ -1,14 +1,11 @@
 {
-  "bom-ref": "ghcr.io/nookyo/qubership-logging-integration-tests:9a07ab2d-3184-4722-87e0-07ddf3def7a0",
-  "type": "container",
   "mime-type": "application/vnd.docker.image",
   "name": "qubership-logging-integration-tests",
-  "group": "default",
   "version": "main",
   "hashes":[
     {
       "alg": "sha256",
       "content": "7d429a4d37e26f3be114315f0af643c2c768964ecb6f3f0b2c53f2c9e1bb4775"
     }],
-  "purl": "pkg:docker/core/ghcr.io/nookyo/qubership-logging-integration-tests@main?registryName=sandbox"
+  "reference": "pkg:docker/core/ghcr.io/nookyo/qubership-logging-integration-tests@main?registryName=sandbox"
 }

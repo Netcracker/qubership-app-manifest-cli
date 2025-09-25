@@ -117,6 +117,7 @@ def url_2_purl(url: str, type: str) -> str:
     # Проверяю, что url содержит github.com, если тип github
     if purl_type == "github" and "github.com" not in url:
         raise ValueError("GitHub purl can only be generated from github.com URLs")
+    print(f"    Detected purl type: {purl_type}")
     # Если тип docker
     if purl_type == "docker":
         # ghcr.io/owner/image:tag для GitHub Container Registry
@@ -135,6 +136,7 @@ def url_2_purl(url: str, type: str) -> str:
         if url.startswith("oci://"):
             url_body = url[len("oci://"):] # qubership-host/netcracker/qubership-core:2.1.0
             url_domain, url_body = url_body.split("/",1) # url_domain=qubership-host, url_body=netcracker/qubership-core:2.1.0
+            url_domain = "oci://" + url_domain
             if ':' in url_body:
                 url_body, version = url_body.split(':', 1) # url_body=netcracker/qubership-core, version=2.1.0
             else:
@@ -165,7 +167,6 @@ def url_2_purl(url: str, type: str) -> str:
 # возвращает name registry, если найден, иначе выбрасывает ValueError
 def get_registry_by_param(param_name: str, param_value: str, reg_type: str, registry_files_dir: str = "configuration/RegDefs") -> str:
     import os
-    import glob
     import yaml
     if not os.path.isdir(registry_files_dir):
         raise ValueError(f"Registry files directory {registry_files_dir} does not exist or is not a directory")
@@ -180,4 +181,16 @@ def get_registry_by_param(param_name: str, param_value: str, reg_type: str, regi
         reg_config_data = reg_data[f'{reg_type}']
         if param_name in reg_config_data and reg_config_data[param_name] == param_value:
             return reg_data['name']
+        else:
+            continue
     raise ValueError(f"Registry with {param_name}={param_value} not found in {registry_files_dir}")
+
+def get_version_from_purl(purl: str) -> str:
+    if '@' not in purl:
+        return "latest"
+    purl_body = purl.split('@', 1)[1]
+    if '?' in purl_body:
+        version = purl_body.split('?', 1)[0]
+    else:
+        version = purl_body
+    return version

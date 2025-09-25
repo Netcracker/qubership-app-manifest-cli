@@ -3,7 +3,7 @@ from ..commands.create import create_command
 from ..commands.create import get_bom_ref
 from ..services.components import add_component as _add_component
 from ..services.dependencies import add_dependency as _add_dependency
-from ..services.purl_url import url_2_purl
+from ..services.purl_url import url_2_purl, get_version_from_purl
 #from ..services.resource_profile_baseline import discover_standalone_runnable_component
 from ..services.helm_discovery import helm_discovery
 from pathlib import Path
@@ -58,6 +58,7 @@ def generate_command(
     for comp in components:
         # Удаляю dependsOn, чтобы не было в манифесте
         comp.pop("dependsOn", None)
+        comp.pop("reference", None)
         # if comp.get("mime-type") == "application/vnd.qubership.standalone-runnable":
         #     if resources_dir is None:
         #         raise ValueError("When component with mime-type 'application/vnd.qubership.standalone-runnable' provided in configuration, --resources-dir must be specified")
@@ -174,13 +175,15 @@ def get_components_from_data(data: dict) -> List[dict]:
         if "name" not in comp or ("mime-type" not in comp and "mimeType" not in comp):
             raise ValueError("Each component must have 'name' and 'mime-type/mimeType' fields")
         mime_type = comp.get("mimeType",comp.get("mime-type"))
+        purl = url_2_purl(comp.get("reference"), mime_type)
+        version = comp.get("version", get_version_from_purl(purl))
         components.append({
             "name": comp["name"],
             "mime-type": mime_type,
-            "version": comp.get("version", ""),
+            "version": version,
             "properties": comp.get("properties", []),
-            "purl": url_2_purl(comp.get("reference"), mime_type),
-            "reference": comp.get("reference", ""),
+            "purl": purl,
+            "reference": comp.get("reference"),
             "dependsOn": comp.get("dependsOn", [])
         })
     return components

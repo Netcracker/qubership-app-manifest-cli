@@ -14,7 +14,6 @@ metadata:
 components:
   - name: qubership-logging-ui
     mimeType: application/vnd.docker.image
-    version: 1.0.0
     reference: ghcr.io/nookyo/qubership-logging-ui:1.0.0
     dependsOn:
       - name: qubership-logging-integration-tests
@@ -32,6 +31,12 @@ components:
       - name: qubership-logging-ui
         mimeType: application/vnd.docker.image
         valuesPathPrefix: ui
+  - name: patroni-services
+    mimeType: application/vnd.qubership.helm.chart
+    reference: oci://ghcr.io/borislavr/pgskipper-operator/patroni-services:1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897
+    dependsOn:
+      - name: patroni
+        mimeType: application/vnd.qubership.standalone-runnable
   - name: patroni
     mimeType: application/vnd.qubership.standalone-runnable
     dependsOn:

@@ -1,9 +1,6 @@
 {
-"bom-ref": "patroni-core:a6e617ff-9b70-40a5-a4cf-2016ee5a0b2c",
 "name": "patroni-core",
 "version": "1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897",
-"appVersion": "1.16.0",
-"type": "application",
 "mime-type": "application/vnd.qubership.helm.chart",
-"purl": "ghcr.io/borislavr/pgskipper-operator/patroni-core:1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897"
+"reference": "oci://ghcr.io/borislavr/pgskipper-operator/patroni-core:1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897"
 }
