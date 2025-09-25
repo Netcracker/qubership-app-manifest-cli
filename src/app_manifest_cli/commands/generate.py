@@ -18,7 +18,6 @@ def generate_command(
     version: str = typer.Option("", "--version", help="Application version"),
     out: Optional[str] = typer.Option(None, "--out", "-o", help="Output file (default: stdout)"),
     discovery: bool = typer.Option(False, "--discovery", help="Enable component discovery"),
-    resources_dir: Optional[str] = typer.Option(None, "--resources-dir", help="Directory with resource files"),
 ) -> None:
     configuration_data = load_configuration(configuration)
     if version == "" and "version" in configuration_data.get("metadata", {}).get("component", {}):

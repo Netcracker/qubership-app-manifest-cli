@@ -10,11 +10,12 @@
 import yaml
 from typing import List
 
-def purl_2_url(purl: str, reg_config: str) -> str:
+def purl_2_url(purl: str, reg_config: str="") -> str:
     """
     Converts a Package URL (purl) to a standard URL.
     For example, converts 'pkg:helm/bitnami/nginx?version=1.2.3' to 'https://charts.bitnami.com/bitnami/nginx-1.2.3.tgz'
     """
+    return purl
     package_type = purl.split('/')[0].split(':')[1]
     if package_type not in ["helm", "docker", "github"]:
         raise ValueError(f"Unsupported package type: {package_type}")
@@ -85,3 +86,6 @@ def helm_purl_2_url(purl: str, reg_config: str) -> str:
 
 def github_purl_2_url(purl: str, reg_config: str) -> str:
     return "https://github.com/owner/repo/repo.tar.gz"
+
+def url_2_purl(purl: str) -> str:
+    return purl
