@@ -33,7 +33,7 @@ def create_command(
 ):
     body = {
         "serialNumber": get_uuid(),
-        "$schema": "https://github.com/Netcracker/qubership-app-manifest-cli/blob/main/schemas/v1/application-manifest.schema.json",
+        "$schema": "https://github.com/Netcracker/qubership-app-manifest-cli/releases/download/v1/application-manifest.schema.json",
         "bomFormat": "CycloneDX",
         "specVersion": "1.6",
         "metadata": {

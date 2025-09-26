@@ -40,6 +40,7 @@ def generate_command(
     # Перебираю компоненты из конфига, если в json_components есть такой же, то обновляю его
     components = []
     for conf_comp in config_components:
+        conf_comp['mime-type'] = conf_comp["mimeType"]
         for json_comp in json_components:
             if conf_comp["name"] == json_comp["name"] and conf_comp["mime-type"] == json_comp["mime-type"]:
                 conf_comp.update(json_comp)
@@ -58,17 +59,12 @@ def generate_command(
         components = helm_discovery(components)
     # Добавляю все компоненты в манифест
     for comp in components:
-        # Удаляю dependsOn, чтобы не было в манифесте
-        comp.pop("dependsOn", None)
-        comp.pop("reference", None)
-        # if comp.get("mime-type") == "application/vnd.qubership.standalone-runnable":
-        #     if resources_dir is None:
-        #         raise ValueError("When component with mime-type 'application/vnd.qubership.standalone-runnable' provided in configuration, --resources-dir must be specified")
-        #     comp = discover_standalone_runnable_component(comp, resources_dir)
-
+        if comp.get("mime-type") == "application/vnd.qubership.standalone-runnable":
+            if comp.get("version", "") == "":
+                comp["version"] = version
         typer.echo(f"Adding component: {comp['name']} with mime-type: {comp['mime-type']}")
         #typer.echo(f"comp details: {json.dumps(comp, indent=2)}")
-        _add_component(manifest_path=out, payload_text=json.dumps(comp), out_file=None)
+        _add_component(manifest_path=out, payload_text=json.dumps(obj=comp,sort_keys=True), out_file=None)
     # Формирую простой список компонент для удобства поиска
     components_list = [ comp["mime-type"] + ":" + comp["name"] for comp in components]
     for dep in config_dependencies:
@@ -119,6 +115,7 @@ def load_configuration(configuration: str) -> dict:
 def load_dependencies(config_data: dict) -> List:
     deps = []
     for comp in config_data:
+        comp["mime-type"] = comp["mimeType"]
         if comp.get('dependsOn'):
             deps_elem_name = f"{comp['name']}"
             deps_elem_ref = f"{comp['mime-type']}:{comp['name']}"
@@ -172,20 +169,20 @@ def generate_helm_values_artifact_mappings(manifest_components: List[dict]) -> d
 def get_components_from_data(data: dict) -> List[dict]:
     if "components" not in data:
         return []
-    components = []
-    for comp in data["components"]:
-        if "name" not in comp or ("mime-type" not in comp and "mimeType" not in comp):
-            raise ValueError("Each component must have 'name' and 'mime-type/mimeType' fields")
-        mime_type = comp.get("mimeType",comp.get("mime-type"))
-        purl = url_2_purl(comp.get("reference"), mime_type)
-        version = comp.get("version", get_version_from_purl(purl))
-        components.append({
-            "name": comp["name"],
-            "mime-type": mime_type,
-            "version": version,
-            "properties": comp.get("properties", []),
-            "purl": purl,
-            "reference": comp.get("reference"),
-            "dependsOn": comp.get("dependsOn", [])
-        })
-    return components
+    # components = []
+    # for comp in data["components"]:
+    #     if "name" not in comp or ("mime-type" not in comp and "mimeType" not in comp):
+    #         raise ValueError("Each component must have 'name' and 'mime-type/mimeType' fields")
+    #     mime_type = comp.get("mimeType",comp.get("mime-type"))
+    #     purl = url_2_purl(comp.get("reference"), mime_type)
+    #     version = comp.get("version", get_version_from_purl(purl))
+    #     components.append({
+    #         "name": comp["name"],
+    #         "mime-type": mime_type,
+    #         "version": version,
+    #         "properties": comp.get("properties", []),
+    #         "purl": purl,
+    #         "reference": comp.get("reference"),
+    #         "dependsOn": comp.get("dependsOn", [])
+    #     })
+    return data["components"]

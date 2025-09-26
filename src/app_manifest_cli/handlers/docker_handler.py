@@ -25,6 +25,10 @@ def handle(obj: dict) -> dict:
         obj["version"] = get_version_from_purl(obj.get("purl", ""))
     if "bom-ref" not in obj or obj.get("bom-ref", "") == "":
         obj["bom-ref"] = get_bom_ref(obj.get("name", ""))
+    if "hashes" in obj and obj["hashes"] != []:
+        for hash in obj["hashes"]:
+            hash['alg'] = format_hash_name(hash['alg'])
+
     for field in DOCKER_REQUIRED_FIELDS:
         if field not in obj:
             raise ValueError(f"Missing required field '{field}' in docker image component")
@@ -35,3 +39,12 @@ def handle(obj: dict) -> dict:
             print(f"  Warning: Unknown field '{field}' in docker image component")
             obj.pop(field)
     return {"strategy": "docker", "data": obj}
+
+def format_hash_name(hash_str):
+    hash_algs = {
+        "md5": "MD5",
+        "sha256": "SHA-256",
+        "sha384": "SHA-384",
+        "sha512": "SHA-512"
+    }
+    return hash_algs.get(hash_str, hash_str.upper())

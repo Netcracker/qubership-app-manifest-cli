@@ -72,44 +72,50 @@ def helm_discovery(components: List) -> List:
         return components
     print("Helm is installed, proceeding with helm discovery.")
     # Иду по всем компонентам, у которых mime-type application/vnd.qubership.helm.chart
-    for comp in components:
+    for comp in [f for f in components if f['mime-type'] == 'application/vnd.qubership.helm.chart']:
+        chart = single_chart_discovery(comp)
+        comp.update(chart)
+    return components
+
+def single_chart_discovery(chart: dict) -> dict:
         try:
             # делаю директорию для скачивания чарта с рандомным именем
             chart_dir = f"chart-{os.urandom(4).hex()}"
             os.makedirs(chart_dir, exist_ok=True)
-            if comp.get("mime-type") != "application/vnd.qubership.helm.chart":
-                continue
-            if not comp['reference']:
+            if chart.get("mime-type") != "application/vnd.qubership.helm.chart":
+                print(f"Component {chart['name']} isn't a chart.")
+                return chart
+            if not chart['reference']:
                 raise ValueError("Helm chart component must have reference")
             # Тут должна быть логика скачивания чарта по purl, распаковки и чтения файлов
-            chart_url = comp["reference"]
-            print(f"Discovering helm chart: {comp['name']} with reference: {comp['reference']}")
+            chart_url = chart["reference"]
+            print(f"Discovering helm chart: {chart['name']} with reference: {chart['reference']}")
             try:
-                chart = subprocess.run(f"helm pull --untar --untardir {chart_dir} {chart_url}", shell=True, text=True, check=True, capture_output=True).stdout.split()
+                helm_output = subprocess.run(f"helm pull --untar --untardir {chart_dir} {chart_url}", shell=True, text=True, check=True, capture_output=True).stdout.split()
             except subprocess.CalledProcessError as e:
-                raise ValueError(f"Error pulling chart for {comp['name']} with reference: {comp['reference']}. Error: {e.stderr}")
-            chart_file_path = os.path.join(chart_dir, comp['name'], "Chart.yaml")
+                raise ValueError(f"Error pulling chart for {chart['name']} with reference: {chart['reference']}. Error: {e.stderr}")
+            chart_file_path = os.path.join(chart_dir, chart['name'], "Chart.yaml")
             if not os.path.isfile(chart_file_path):
-                raise ValueError(f"Chart.yaml not found in pulled chart for {comp['name']}")
+                raise ValueError(f"Chart.yaml not found in pulled chart for {chart['name']}")
             with open(chart_file_path, 'r') as f:
                 chart_info = yaml.safe_load(f)
             #print(f"Chart info: {chart_info}")
             if chart_info.get("type") == "library":
-                if "properties" not in comp:
-                    comp["properties"] = []
-                comp["properties"].append({"name": "isLibrary", "value": True})
+                if "properties" not in chart:
+                    chart["properties"] = []
+                chart["properties"].append({"name": "isLibrary", "value": True})
             # Проверяю наличие dependencies
             if "dependencies" not in chart_info:
-                print(f"No dependencies found in chart {comp['name']}")
-                continue
-            for dep in chart_info["dependencies"]:
+                print(f"No dependencies found in chart {chart['name']}")
+                # continue
+            for dep in chart_info.get("dependencies", []):
                 if "name" not in dep or "version" not in dep:
-                    print(f"Skipping invalid dependency in chart {comp['name']}: {dep}")
+                    print(f"Skipping invalid dependency in chart {chart['name']}: {dep}")
                     continue
                 dep_bom_ref = get_bom_ref(dep["name"])
-                if "components" not in comp:
-                    comp["components"] = []
-                comp["components"].append({
+                if "components" not in chart:
+                    chart["components"] = []
+                chart["components"].append({
                     "bom-ref": f"{dep_bom_ref}",
                     "type": "application",
                     "mime-type": "application/vnd.qubership.helm.chart",
@@ -119,13 +125,13 @@ def helm_discovery(components: List) -> List:
                     "components": []
                 })
             # Проверяю наличие values.schema.json
-            if os.path.isfile(os.path.join(chart_dir, comp['name'], "values.schema.json")):
-                with open(os.path.join(chart_dir, comp['name'], "values.schema.json"), 'rb') as f:
+            if os.path.isfile(os.path.join(chart_dir, chart['name'], "values.schema.json")):
+                with open(os.path.join(chart_dir, chart['name'], "values.schema.json"), 'rb') as f:
                     encoded_content = base64.b64encode(f.read()).decode('utf-8')
-                if "components" not in comp:
-                    comp["components"] = []
-                comp["components"].append({
-                    "bom-ref": get_bom_ref(f"{comp['name']}-values-schema"),
+                if "components" not in chart:
+                    chart["components"] = []
+                chart["components"].append({
+                    "bom-ref": get_bom_ref(f"{chart['name']}-values-schema"),
                     "type": "data",
                     "mime-type": "application/vnd.qubership.helm.values.schema",
                     "name": "values.schema.json",
@@ -142,13 +148,13 @@ def helm_discovery(components: List) -> List:
                     }]
                 })
             # Проверяю наличие resource-profiles directory
-            resource_profiles_path = os.path.join(chart_dir, comp['name'], "resource-profiles")
+            resource_profiles_path = os.path.join(chart_dir, chart['name'], "resource-profiles")
             if os.path.isdir(resource_profiles_path):
                 profile_files = [f for f in os.listdir(resource_profiles_path) if os.path.isfile(os.path.join(resource_profiles_path, f)) and f.endswith(('.yaml', '.yml', '.json'))]
                 if profile_files:
-                    if "components" not in comp:
-                        comp["components"] = []
-                    comp["components"].append({
+                    if "components" not in chart:
+                        chart["components"] = []
+                    chart["components"].append({
                         "bom-ref": get_bom_ref("resource-profile-baselines"),
                         "type": "data",
                         "mime-type": "application/vnd.qubership.resource-profile-baseline",
@@ -161,7 +167,7 @@ def helm_discovery(components: List) -> List:
                             content = f.read()
                         encoded_content = base64.b64encode(content).decode('utf-8')
                         content_type = "application/json" if profile_file.endswith('.json') else "application/yaml"
-                        comp["components"][-1]["data"].append({
+                        chart["components"][-1]["data"].append({
                             "type": "configuration",
                             "name": profile_file,
                             "contents": {
@@ -172,11 +178,10 @@ def helm_discovery(components: List) -> List:
                                 }
                             }
                         })
-            # Clean up downloaded chart directory
         except Exception as e:
-            print(f"Error processing helm chart component {comp.get('name', 'unknown')}: {e}", file=sys.stderr)
+            print(f"Error processing helm chart component {chart.get('name', 'unknown')}: {e}", file=sys.stderr)
         finally:
             # Удаляю директорию чарта
             if os.path.isdir(chart_dir):
                 subprocess.run(f"rm -rf {chart_dir}", shell=True)
-    return components
+        return chart
