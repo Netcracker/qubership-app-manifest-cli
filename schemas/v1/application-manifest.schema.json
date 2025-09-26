@@ -8,7 +8,6 @@
     "bomFormat",
     "specVersion",
     "serialNumber",
-    "version",
     "metadata",
     "components",
     "dependencies"
