@@ -1,4 +1,5 @@
 import base64
+import concurrent.futures
 import os
 import subprocess
 import sys
@@ -61,20 +62,40 @@ from ..services.purl_url import url_2_purl
 #        }
 
 
+# def helm_discovery(components: List) -> List:
+#     if components is None:
+#         return {}
+#     # Проверяю, что helm установлен
+#     try:
+#         subprocess.run("helm version", shell=True, text=True, check=True, capture_output=True)
+#     except subprocess.CalledProcessError as e:
+#         print("Helm is not installed or not found in PATH. Please install Helm to use helm discovery.", file=sys.stderr)
+#         return components
+#     print("Helm is installed, proceeding with helm discovery.")
+#     # Иду по всем компонентам, у которых mime-type application/vnd.qubership.helm.chart
+#     for comp in [f for f in components if f['mime-type'] == 'application/vnd.qubership.helm.chart']:
+#         chart = single_chart_discovery(comp)
+#         comp.update(chart)
+#     return components
+
 def helm_discovery(components: List) -> List:
     if components is None:
         return {}
-    # Проверяю, что helm установлен
     try:
         subprocess.run("helm version", shell=True, text=True, check=True, capture_output=True)
     except subprocess.CalledProcessError as e:
         print("Helm is not installed or not found in PATH. Please install Helm to use helm discovery.", file=sys.stderr)
         return components
     print("Helm is installed, proceeding with helm discovery.")
-    # Иду по всем компонентам, у которых mime-type application/vnd.qubership.helm.chart
-    for comp in [f for f in components if f['mime-type'] == 'application/vnd.qubership.helm.chart']:
-        chart = single_chart_discovery(comp)
-        comp.update(chart)
+
+    charts = [f for f in components if f['mime-type'] == 'application/vnd.qubership.helm.chart']
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = list(executor.map(single_chart_discovery, charts))
+    # Обновляем компоненты результатами
+    chart_names = {c['name'] for c in charts}
+    for i, comp in enumerate(components):
+        if comp['name'] in chart_names:
+            comp.update(results[[c['name'] for c in charts].index(comp['name'])])
     return components
 
 def single_chart_discovery(chart: dict) -> dict:
