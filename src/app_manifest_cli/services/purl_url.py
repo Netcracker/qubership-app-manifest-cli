@@ -194,3 +194,14 @@ def get_version_from_purl(purl: str) -> str:
     else:
         version = purl_body
     return version
+
+def get_group_from_purl(purl: str) -> str:
+    # Get group or namespace from purl for docker image
+    # pkg:docker/library/nginx@1.19.0
+    if '/' not in purl:
+        return ""
+    purl_body = purl.split('/', 1)[1]
+    if '/' not in purl_body:
+        return ""
+    group = purl_body.split('/', 1)[0]
+    return group

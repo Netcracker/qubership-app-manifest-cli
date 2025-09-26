@@ -13,16 +13,18 @@ from typing import Optional
 def generate_command(
     components_files: List[Path] = typer.Argument(None, min=0, help="One or more file paths to process"),
     configuration: Optional[str] = typer.Option(None, "--config", "-c"),
-    name: str = typer.Option(
-        "qubership-integration-platform", "--name", help="Application name"
-    ),
-    version: str = typer.Option("", "--version", help="Application version"),
+    name: str = typer.Option(None, "--name", help="Application name"),
+    version: str = typer.Option(None, "--version", help="Application version"),
     out: Optional[str] = typer.Option(None, "--out", "-o", help="Output file (default: stdout)"),
     discovery: bool = typer.Option(False, "--discovery", help="Enable component discovery"),
 ) -> None:
     configuration_data = load_configuration(configuration)
-    if version == "" and "version" in configuration_data.get("metadata", {}).get("component", {}):
+    if version == None and "version" in configuration_data.get("metadata", {}).get("component", {}):
         version = configuration_data["metadata"]["component"]["version"]
+    if name == None and "name" in configuration_data.get("metadata", {}).get("component", {}):
+        name = configuration_data["metadata"]["component"]["name"]
+    if out == None:
+        out = name + '-' + version + '.json'
     body = create_command(name=name, version=version, out=open(out, "w"))
     # Получаю компоненты из конфига -- именно они определяют состав манифеста
     config_components = get_components_from_data(configuration_data)
