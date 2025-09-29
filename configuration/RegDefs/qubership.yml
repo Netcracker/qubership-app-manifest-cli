@@ -9,4 +9,4 @@ githubReleaseConfig:
   repository: qubership-jaeger
 helmAppConfig:
   repositoryDomainName: oci://ghcr.io
-  helmGroupRepoName: helm-group
+  helmGroupRepoName: qubership-jaeger
