@@ -1,7 +1,0 @@
-{
-    "bom-ref": "qubership-integration-platform-variables-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
-    "type": "application",
-    "mime-type": "application/vnd.qubership.helm.chart",
-    "name": "qubership-integration-platform-variables-management",
-    "properties": []
-}
