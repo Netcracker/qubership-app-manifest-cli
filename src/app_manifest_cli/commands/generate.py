@@ -44,7 +44,9 @@ def generate_command(
         conf_comp['mime-type'] = conf_comp["mimeType"]
         for json_comp in json_components:
             if conf_comp["name"] == json_comp["name"] and conf_comp["mime-type"] == json_comp["mime-type"]:
+                typer.echo(f"Found update for component {conf_comp['name']}")
                 conf_comp.update(json_comp)
+                typer.echo(f"Updated component: {conf_comp}")
         if "bom-ref" not in conf_comp:
             conf_comp["bom-ref"] = get_bom_ref(conf_comp["name"])
         components.append(conf_comp)
