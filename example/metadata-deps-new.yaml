@@ -1,16 +1,5 @@
-bomFormat: CycloneDX
-specVersion: "1.6"
-metadata:
-  component:
-    type: application
-    mimeType: application/vnd.qubership.application
-    name: qubership-integration-platform
-    version: "1.0.0"
-  tools:
-    components:
-      - type: application
-        name: sbom-generator
-        version: "2.3.1"
+applicationVersion: qubership-integration-platform
+applicationName: 2.3.1
 components:
   - name: qubership-logging-ui
     mimeType: application/vnd.docker.image

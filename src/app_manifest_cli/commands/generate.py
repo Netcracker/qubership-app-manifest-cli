@@ -13,16 +13,17 @@ from typing import Optional
 def generate_command(
     components_files: List[Path] = typer.Argument(None, min=0, help="One or more file paths to process"),
     configuration: Optional[str] = typer.Option(None, "--config", "-c"),
-    name: str = typer.Option(None, "--name", help="Application name"),
-    version: str = typer.Option(None, "--version", help="Application version"),
+    name: str = typer.Option(None, "--name", "-n", help="Application name"),
+    version: str = typer.Option(None, "--version", "-v", help="Application version"),
     out: Optional[str] = typer.Option(None, "--out", "-o", help="Output file (default: stdout)"),
-    discovery: bool = typer.Option(False, "--discovery", help="Enable component discovery"),
+    # TODO: Убрать этот параметр:
+    # discovery: bool = typer.Option(False, "--discovery", help="Enable component discovery"),
 ) -> None:
     configuration_data = load_configuration(configuration)
-    if version == None and "version" in configuration_data.get("metadata", {}).get("component", {}):
-        version = configuration_data["metadata"]["component"]["version"]
-    if name == None and "name" in configuration_data.get("metadata", {}).get("component", {}):
-        name = configuration_data["metadata"]["component"]["name"]
+    if version == None and "applicationVersion" in configuration_data:
+        version = configuration_data["applicationVersion"]
+    if name == None and "applicationName" in configuration_data:
+        name = configuration_data["applicationName"]
     if out == None:
         out = name + '-' + version + '.json'
     body = create_command(name=name, version=version, out=open(out, "w"))
@@ -55,8 +56,8 @@ def generate_command(
     components = generate_helm_values_artifact_mappings(components)
     # Если включено discovery, то запускаю его
     # дополняя компоненты зависимостями и свойствами
-    if discovery:
-        components = helm_discovery(components)
+    # if discovery:
+    components = helm_discovery(components)
     # Добавляю все компоненты в манифест
     for comp in components:
         if comp.get("mime-type") == "application/vnd.qubership.standalone-runnable":
