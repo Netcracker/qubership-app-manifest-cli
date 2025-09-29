@@ -1,5 +1,5 @@
-applicationVersion: qubership-integration-platform
-applicationName: 2.3.1
+applicationVersion: 2.3.1
+applicationName: qubership-integration-platform
 components:
   - name: qubership-logging-ui
     mimeType: application/vnd.docker.image
