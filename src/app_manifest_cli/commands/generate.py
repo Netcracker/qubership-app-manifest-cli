@@ -88,7 +88,8 @@ def generate_command(
                 dep_record["dependsOn"].append(depends_on_component["bom-ref"])
             _add_dependency(manifest_path=out, payload_text=json.dumps(dep_record), configuration=None, out_file=None)
         typer.echo(f"Manifest generated and saved to {out}")
-        os.environ["PATH_APP_MANIFEST"] = out
+        with open('.env', 'a') as f:
+            f.write(f'PATH_APP_MANIFEST={out}\n')
     except Exception as e:
         typer.echo(f"Error: {e}")
         raise typer.Exit(code=1)
