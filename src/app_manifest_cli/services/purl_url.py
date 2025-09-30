@@ -148,11 +148,11 @@ def url_2_purl(url: str, type: str) -> str:
                 version = "latest"
             if '/' not in url_body:
                 name = url_body
-                purl = f"pkg:helm/{name}?version={version}&registry_name={get_registry_by_param('repositoryDomainName', url_domain, 'helmAppConfig')}"
+                purl = f"pkg:helm/{name}@{version}?registry_name={get_registry_by_param('repositoryDomainName', url_domain, 'helmAppConfig')}"
             else:
                 name = url_body.split('/')[-1]
                 namespace = '/'.join(url_body.split('/')[0:-1]) # namespace = netcracker, name = qubership-core
-                purl = f"pkg:helm/{namespace}/{name}?version={version}&registry_name={get_registry_by_param('repositoryDomainName', url_domain, 'helmAppConfig')}"
+                purl = f"pkg:helm/{namespace}/{name}@{version}?registry_name={get_registry_by_param('repositoryDomainName', url_domain, 'helmAppConfig')}"
     if purl_type == "github":
         # https://github.com/Netcracker/qubership-airflow/releases/download/2.0.1/airflow-1.19.0-dev.tgz
         if "github.com" not in url or "/releases/download/" not in url:
