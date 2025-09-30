@@ -121,10 +121,11 @@ def single_chart_discovery(chart: dict) -> dict:
             with open(chart_file_path, 'r') as f:
                 chart_info = yaml.safe_load(f)
             #print(f"Chart info: {chart_info}")
-            if chart_info.get("type") == "library":
-                if "properties" not in chart:
-                    chart["properties"] = []
-                chart["properties"].append({"name": "isLibrary", "value": True})
+            #if chart_info.get("type") == "library":
+            if "properties" not in chart:
+                chart["properties"] = []
+            chart["properties"].append({"name": "isLibrary", "value": chart_info.get("type") == "library"})
+
             # Проверяю наличие dependencies
             if "dependencies" not in chart_info:
                 print(f"No dependencies found in chart {chart['name']}")
