@@ -26,21 +26,21 @@ pip install .
 
 ## Использование команды `generate`
 
-Команда `generate` формирует манифест приложения на основе конфигурационного файла и, при необходимости, дополнительных файлов компонентов.
+Команда `generate` формирует манифест приложения на основе [конфигурационного файла](./example/jaeger/qubership-jaeger-am-build.yaml) и, при необходимости, [дополнительных файлов компонентов](./example/jaeger/).
 
 ### Синтаксис
 
 ```bash
 python -m venv venv
 source venv/bin/activate
-app-manifest generate [COMPONENTS_FILES ...] --config CONFIG_PATH [--name NAME] [--version VERSION] [--out OUT_FILE]
+app-manifest generate --config CONFIG_PATH [--name NAME] [--version VERSION] [--out OUT_FILE] [COMPONENTS_FILES ...]
 ```
 
-- `[COMPONENTS_FILES ...]` — (необязательно) список путей к JSON-файлам компонентов.
 - `--config`, `-c` — путь к YAML/JSON конфигурационному файлу (обязательно).
 - `--name`, `-n` — имя приложения (по умолчанию берётся из конфига).
 - `--version`, `-v` — версия приложения (по умолчанию берётся из конфига).
 - `--out`, `-o` — имя выходного файла (по умолчанию формируется автоматически).
+- `[COMPONENTS_FILES ...]` — (необязательно) список путей к JSON-файлам компонентов.
 
 ### Примеры
 
