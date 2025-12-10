@@ -1,32 +1,32 @@
-# Документация: Команда `generate` для `app_manifest_cli`
+# Documentation: `generate` Command for `app_manifest_cli`
 
-## Установка
+## Installation
 
-1. **Клонируйте репозиторий:**
+1. **Clone the repository:**
 ```bash
 git clone https://github.com/borislavr/qubership-app-manifest-cli.git
 cd qubership-app-manifest-cli
 ```
 
-2. **Создайте venv**
+2. **Create venv**
 ```bash
 python -m venv venv
 source venv/bin/activate
 ```
 
-3. **Установите зависимости:**
+3. **Install dependencies:**
 ```bash
 pip install -r pyproject.toml
 ```
 
-4. **Установите пакет:**
+4. **Install the package:**
 ```bash
 pip install .
 ```
 
-## Использование команды `generate`
+## Using the `generate` Command
 
-Команда `generate` формирует манифест приложения на основе [конфигурационного файла](./example/jaeger/qubership-jaeger-am-build.yaml) и, при необходимости, [дополнительных файлов компонентов](./example/jaeger/).
+The `generate` command creates an application manifest based on a [configuration file](./example/jaeger/qubership-jaeger-am-build.yaml) and, if needed, [additional component files](./example/jaeger/).
 
 ### Синтаксис
 
@@ -36,42 +36,42 @@ source venv/bin/activate
 app-manifest generate --config CONFIG_PATH [--name NAME] [--version VERSION] [--out OUT_FILE] [COMPONENTS_FILES ...]
 ```
 
-- `--config`, `-c` — путь к YAML/JSON конфигурационному файлу (обязательно).
-- `--name`, `-n` — имя приложения (по умолчанию берётся из конфига).
-- `--version`, `-v` — версия приложения (по умолчанию берётся из конфига).
-- `--out`, `-o` — имя выходного файла (по умолчанию формируется автоматически).
-- `[COMPONENTS_FILES ...]` — (необязательно) список путей к JSON-файлам компонентов.
+- `--config`, `-c` — path to a YAML/JSON configuration file (required).
+- `--name`, `-n` — application name (defaults to value from config).
+- `--version`, `-v` — application version (defaults to value from config).
+- `--out`, `-o` — output file name (generated automatically by default).
+- `[COMPONENTS_FILES ...]` — (optional) list of paths to JSON component files.
 
-### Примеры
+### Examples
 
-**Минимальный пример:**
+**Minimal example:**
 ```bash
 python -m app_manifest_cli generate --config ./myapp-config.yaml
 ```
 
-**С указанием имени, версии и выходного файла:**
+**With name, version, and output file:**
 ```bash
 python -m app_manifest_cli generate --config ./myapp-config.yaml --name my-app --version 2.0.1 --out manifest.json
 ```
 
-**С дополнительными файлами компонентов:**
+**With additional component files:**
 ```bash
 python -m app_manifest_cli generate --config ./myapp-config.yaml comp1.json comp2.json
 ```
 
-### Примечания
+### Notes
 
-- Для работы с helm-чартами требуется установленный [Helm](https://helm.sh/).
-- Если не указать имя и версию, они будут взяты из конфигурационного файла.
-- Если не указать выходной файл, он будет создан автоматически по шаблону `<name>-<version>.json`.
+- Working with Helm charts requires [Helm](https://helm.sh/) to be installed.
+- If name and version are not specified, they will be taken from the configuration file.
+- If output file is not specified, it will be created automatically using the template `<name>-<version>.json`.
 
 ---
 
-**Для справки по всем командам:**
+**For help on all commands:**
 ```bash
 python -m app_manifest_cli --help
 ```
-**Для справки по generate:**
+**For help on generate:**
 ```bash
 python -m app_manifest_cli generate --help
 ```
