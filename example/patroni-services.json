@@ -1,0 +1,6 @@
+{
+"name": "patroni-services",
+"version": "1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897",
+"mime-type": "application/vnd.qubership.helm.chart",
+"reference": "oci://ghcr.io/borislavr/pgskipper-operator/patroni-services:1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897"
+}

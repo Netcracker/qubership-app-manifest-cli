@@ -1,0 +1,8 @@
+{
+    "appVersion": "2.10.0",
+    "mime-type": "application/vnd.qubership.helm.chart",
+    "name": "qubership-jaeger",
+    "reference": "oci://ghcr.io/borislavr/qubership-jaeger/qubership-jaeger:0.0.8",
+    "type": "application",
+    "version": "0.0.8"
+}

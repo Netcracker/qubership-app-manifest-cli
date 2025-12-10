@@ -1,0 +1,13 @@
+{
+  "type": "container",
+  "mime-type": "application/vnd.docker.image",
+  "name": "jaeger-readiness-probe",
+  "group": "",
+  "version": "0.0.8",
+  "hashes":[
+    {
+      "alg": "sha256",
+      "content": "26a021a1b6f60fd612ff2025be4f705d23715355799159f281aaa7a93e5b6e71"
+    }],
+  "reference": "ghcr.io/borislavr/jaeger-readiness-probe:0.0.8"
+}

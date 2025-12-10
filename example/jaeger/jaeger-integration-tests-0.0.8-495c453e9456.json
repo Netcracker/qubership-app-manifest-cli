@@ -1,0 +1,13 @@
+{
+  "type": "container",
+  "mime-type": "application/vnd.docker.image",
+  "name": "jaeger-integration-tests",
+  "group": "",
+  "version": "0.0.8",
+  "hashes":[
+    {
+      "alg": "sha256",
+      "content": "495c453e945612f748399a944ab783fea11e33a292a48b10d5e42869c75736ac"
+    }],
+  "reference": "ghcr.io/borislavr/jaeger-integration-tests:0.0.8"
+}

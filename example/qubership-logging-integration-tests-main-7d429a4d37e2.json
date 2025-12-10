@@ -1,0 +1,11 @@
+{
+  "mime-type": "application/vnd.docker.image",
+  "name": "qubership-logging-integration-tests",
+  "version": "main",
+  "hashes":[
+    {
+      "alg": "sha256",
+      "content": "7d429a4d37e26f3be114315f0af643c2c768964ecb6f3f0b2c53f2c9e1bb4775"
+    }],
+  "reference": "ghcr.io/nookyo/qubership-logging-integration-tests:main"
+}
