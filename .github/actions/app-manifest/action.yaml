@@ -37,25 +37,23 @@ runs:
     - name: "Checkout repository"
       uses: "actions/checkout@v5"
       with:
-        repository: borislavr/qubership-app-manifest-cli
-        ref: "refactoring"
+        repository: netcracker/qubership-app-manifest-cli
+        ref: "${{ inputs.cli-version }}"
         path: "app-manifest-cli"
     - name: Configure Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
     - name: Install dependencies
+      shell: bash
       working-directory: app-manifest-cli
       run: |
         python -m venv venv
         source venv/bin/activate
         python -m pip install --upgrade pip
         pip install .
-        # pip list
-        # pip install PyYAML>=6.0.3
-        # pip list
-      shell: bash
     - name: "Generate application manifest"
+      shell: bash
       working-directory: ${{ github.workspace }}
       id: generate_app_manifest
       run: |
@@ -76,7 +74,6 @@ runs:
           echo "Generated application manifest path: $PATH_APP_MANIFEST"
           # echo "PATH_APP_MANIFEST=$([[ -n '${{ inputs.output }}' ]] && echo '${{ inputs.output }}' || echo ${PATH_APP_MANIFEST})"
           echo "PATH_APP_MANIFEST=${PATH_APP_MANIFEST}" >> $GITHUB_OUTPUT
-      shell: bash
     - name: "Upload application manifest"
       if: ${{ always() && steps.generate_app_manifest.outputs.PATH_APP_MANIFEST }}
       uses: actions/upload-artifact@v4
