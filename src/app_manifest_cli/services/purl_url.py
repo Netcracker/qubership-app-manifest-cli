@@ -120,7 +120,7 @@ def url_2_purl(url: str, type: str) -> str:
     print(f"    Detected purl type: {purl_type}")
     # If type is docker
     if purl_type == "docker":
-        # ghcr.io/owner/image:tag для GitHub Container Registry
+        # ghcr.io/owner/image:tag for GitHub Container Registry
         url_domain, url_body = url.split("/",1) # url_domain=ghcr.io, url_body=owner/image:tag
 
         if ':' in url_body:
