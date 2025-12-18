@@ -38,9 +38,9 @@ from ..services.purl_url import url_2_purl
 #          ]
 #        }
 #      ]
-# 3. Проверяем, есть ли в чарте директория resource-profiles
-# если есть, то для каждого файла с расширением .yaml, .yml или .json в этой директории
-# шифруем файл в base64 и добавляем в component чарта вложенный объект
+# 3. Check if the chart has a resource-profiles directory
+# if yes, for each file with extension .yaml, .yml or .json in this directory
+# encode the file in base64 and add a nested object to the chart component
 #       {
 #          "bom-ref": "resource-profile-baselines:61439a11-c00d-43f5-9bae-fe6db05db2d5",
 #          "type": "data",

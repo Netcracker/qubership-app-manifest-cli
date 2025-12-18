@@ -1,12 +1,12 @@
 # pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]#[SUBPATH]
 #
-# `pkg:` - обязательный префикс, указывающий что это Package URL
-# `TYPE`- тип пакета/артефакта (docker, helm, github)
-# `NAMESPACE` - группа/организация
-# `NAME` - имя пакета/артефакта
-# `@VERSION` - версия
-# `?QUALIFIERS` - дополнительные параметры
-# `#SUBPATH` - подпуть к файлу
+# `pkg:` - required prefix indicating this is a Package URL
+# `TYPE` - package/artifact type (docker, helm, github)
+# `NAMESPACE` - group/organization
+# `NAME` - package/artifact name
+# `@VERSION` - version
+# `?QUALIFIERS` - additional parameters
+# `#SUBPATH` - subpath to file
 import yaml
 from typing import List
 SUPPORTED_URL_PURL_TYPES = ["docker", "helm", "github"]
@@ -84,7 +84,7 @@ def get_registry(registry_id: str, reg_config: str, reg_type: str) -> any:
     return reg_config_data, reg_auth_data
 
 def helm_purl_2_url(purl: str, reg_config: str) -> str:
-    # Затычка
+    # Placeholder
     """
     Converts a Helm Package URL (purl) to a standard URL.
     For example, converts 'pkg:helm/bitnami/nginx?version=1.2.3' to 'https://charts.bitnami.com/bitnami/nginx-1.2.3.tgz'
@@ -92,21 +92,21 @@ def helm_purl_2_url(purl: str, reg_config: str) -> str:
     return "https://example.com/chart.tgz"
 
 def github_purl_2_url(purl: str, reg_config: str) -> str:
-    # Затычка
+    # Placeholder
     return "https://github.com/owner/repo/repo.tar.gz"
 
 # url_2_purl
-# Входные параметры:
-# url - строка с URL
-# type - строка с типом (docker, helm, github) или mime-type (application/vnd.docker.image, application/vnd.qubership.helm.chart)
-# Выходные данные:
-# возвращает строку с purl
+# Input parameters:
+# url - string with URL
+# type - string with type (docker, helm, github) or mime-type (application/vnd.docker.image, application/vnd.qubership.helm.chart)
+# Output data:
+# returns string with purl
 def url_2_purl(url: str, type: str) -> str:
     print(f"  Generating purl from url: {url} with type: {type}")
     purl = ""
     if type not in SUPPORTED_URL_PURL_TYPES and not type.startswith("application/"):
         raise ValueError(f"Unsupported type: {type}. Supported types are: {SUPPORTED_URL_PURL_TYPES} or mime-types")
-    if type.startswith("application/"): # Если в качестве типа передан mime-type, то конвертирую его в purl type
+    if type.startswith("application/"): # If mime-type is passed as type, convert it to purl type
         if type not in MIME_TO_PURL_TYPE:
             return ""
         purl_type = MIME_TO_PURL_TYPE[type]
@@ -114,11 +114,11 @@ def url_2_purl(url: str, type: str) -> str:
             purl_type = "github"
     else:
         purl_type = type
-    # Проверяю, что url содержит github.com, если тип github
+    # Check that url contains github.com if type is github
     if purl_type == "github" and "github.com" not in url:
         raise ValueError("GitHub purl can only be generated from github.com URLs")
     print(f"    Detected purl type: {purl_type}")
-    # Если тип docker
+    # If type is docker
     if purl_type == "docker":
         # ghcr.io/owner/image:tag для GitHub Container Registry
         url_domain, url_body = url.split("/",1) # url_domain=ghcr.io, url_body=owner/image:tag
@@ -166,13 +166,13 @@ def url_2_purl(url: str, type: str) -> str:
     return purl
 
 # get_registry_by_param:
-# Входные параметры:
-# regiestry_files_dir - директория с файлами реестров
-# param_name - имя параметра, по которому ищем (например, groupUri для docker, repositoryDomainName для helmAppConfig и githubReleaseConfig)
-# param_value - значение параметра, по которому ищем
-# reg_type - тип реестра (dockerConfig, helmAppConfig, githubReleaseConfig)
-# Выходные данные:
-# возвращает name registry, если найден, иначе выбрасывает ValueError
+# Input parameters:
+# registry_files_dir - directory with registry files
+# param_name - parameter name to search by (e.g., groupUri for docker, repositoryDomainName for helmAppConfig and githubReleaseConfig)
+# param_value - parameter value to search by
+# reg_type - registry type (dockerConfig, helmAppConfig, githubReleaseConfig)
+# Output data:
+# returns registry name if found, otherwise raises ValueError
 def get_registry_by_param(param_name: str, param_value: str, reg_type: str, registry_files_dir: str = "configuration/RegDefs") -> str:
     import os
     import yaml
