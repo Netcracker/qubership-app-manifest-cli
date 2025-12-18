@@ -4,7 +4,7 @@ from ..commands.create import get_bom_ref
 
 def add_component(manifest_path: str, payload_text: str, out_file):
 
-   # Тут можно написать логику для Компонент
+   # Here you can add logic for adding a component to the manifest
 
     obj = json.loads(payload_text)
     if not obj.get("name"):
