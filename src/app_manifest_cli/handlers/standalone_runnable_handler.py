@@ -2,7 +2,7 @@ from ..commands.create import get_bom_ref
 
 def handle(obj: dict) -> dict:
 
-    # DAO Тут можно добавить логику обработки входящего json standalone-runnable
+    # DAO Here you can add logic for processing incoming json standalone-runnable
     STANDALONE_RUNNABLE_REQUIRED_FIELDS = [
         "type",
         "mime-type",

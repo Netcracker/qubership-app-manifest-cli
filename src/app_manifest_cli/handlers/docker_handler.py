@@ -3,7 +3,7 @@ from ..commands.create import get_bom_ref
 
 def handle(obj: dict) -> dict:
 
-    # DAO Тут можно добавить логику обработки входящего json  Docker Image
+    # DAO Here you can add logic for processing incoming json Docker Image
     DOCKER_REQUIRED_FIELDS = ["type",
         "mime-type",
         "bom-ref",
@@ -33,7 +33,7 @@ def handle(obj: dict) -> dict:
         if field not in obj:
             raise ValueError(f"Missing required field '{field}' in docker image component")
     #print("Running docker_image handler")
-    # удаляю лишние поля из obj
+    # Remove extra fields from obj
     for field in list(obj.keys()):
         if field not in DOCKER_FIELDS:
             print(f"  Warning: Unknown field '{field}' in docker image component")

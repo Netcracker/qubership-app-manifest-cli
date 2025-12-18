@@ -7,16 +7,16 @@ import yaml
 from typing import List
 from ..commands.create import get_bom_ref
 from ..services.purl_url import url_2_purl
-# Здесь должны быть методы для работы с helm chart
-# для генерации дополнительных метаданных
-# На входе получаем url чарта
-# командами helm скачиваем чарт
-# распаковываем его
-# 1. Читаем Chart.yaml, чтобы:
-# - узнать его type, если type: library, то добавляем в манифест property isLibrary=true
-# - узнать, есть ли у него dependencies, если есть, то для каждой зависимости добавляем вложенную component в компоненту этого чарта в манифесте
-# 2. Проверяем,есть ли в чарте файл с именем values.schema.json
-# если есть, то шифруем файл в base64 и добавляем в component чарта вложенный объект
+# Here should be methods for working with helm charts
+# for generating additional metadata
+# Input: chart url
+# Download chart using helm commands
+# Unpack it
+# 1. Read Chart.yaml to:
+# - determine its type, if type: library, then add property isLibrary=true to manifest
+# - determine if it has dependencies, if yes, for each dependency add a nested component to this chart's component in manifest
+# 2. Check if the chart has a file named values.schema.json
+# if yes, encode the file in base64 and add a nested object to the chart component
 #       "components": [
 #        {
 #          "bom-ref": "qubership-jaeger-values-schema:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
@@ -65,14 +65,14 @@ from ..services.purl_url import url_2_purl
 # def helm_discovery(components: List) -> List:
 #     if components is None:
 #         return {}
-#     # Проверяю, что helm установлен
+#     # Check that helm is installed
 #     try:
 #         subprocess.run("helm version", shell=True, text=True, check=True, capture_output=True)
 #     except subprocess.CalledProcessError as e:
 #         print("Helm is not installed or not found in PATH. Please install Helm to use helm discovery.", file=sys.stderr)
 #         return components
 #     print("Helm is installed, proceeding with helm discovery.")
-#     # Иду по всем компонентам, у которых mime-type application/vnd.qubership.helm.chart
+#     # Iterate through all components with mime-type application/vnd.qubership.helm.chart
 #     for comp in [f for f in components if f['mime-type'] == 'application/vnd.qubership.helm.chart']:
 #         chart = single_chart_discovery(comp)
 #         comp.update(chart)
@@ -91,7 +91,7 @@ def helm_discovery(components: List) -> List:
     charts = [f for f in components if f['mime-type'] == 'application/vnd.qubership.helm.chart']
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = list(executor.map(single_chart_discovery, charts))
-    # Обновляем компоненты результатами
+    # Update components with results
     chart_names = {c['name'] for c in charts}
     for i, comp in enumerate(components):
         if comp['name'] in chart_names:
@@ -100,7 +100,7 @@ def helm_discovery(components: List) -> List:
 
 def single_chart_discovery(chart: dict) -> dict:
         try:
-            # делаю директорию для скачивания чарта с рандомным именем
+            # Create directory for downloading chart with random name
             chart_dir = f"chart-{os.urandom(4).hex()}"
             os.makedirs(chart_dir, exist_ok=True)
             if chart.get("mime-type") != "application/vnd.qubership.helm.chart":
@@ -108,7 +108,7 @@ def single_chart_discovery(chart: dict) -> dict:
                 return chart
             if not chart['reference']:
                 raise ValueError("Helm chart component must have reference")
-            # Тут должна быть логика скачивания чарта по purl, распаковки и чтения файлов
+            # Here should be the logic for downloading chart by purl, unpacking and reading files
             chart_url = chart["reference"]
             print(f"Discovering helm chart: {chart['name']} with reference: {chart['reference']}")
             try:
@@ -126,7 +126,7 @@ def single_chart_discovery(chart: dict) -> dict:
                 chart["properties"] = []
             chart["properties"].append({"name": "isLibrary", "value": chart_info.get("type") == "library"})
 
-            # Проверяю наличие dependencies
+            # Check for dependencies
             if "dependencies" not in chart_info:
                 print(f"No dependencies found in chart {chart['name']}")
                 # continue
@@ -146,7 +146,7 @@ def single_chart_discovery(chart: dict) -> dict:
                     "properties": [],
                     "components": []
                 })
-            # Проверяю наличие values.schema.json
+            # Check for values.schema.json
             if os.path.isfile(os.path.join(chart_dir, chart['name'], "values.schema.json")):
                 with open(os.path.join(chart_dir, chart['name'], "values.schema.json"), 'rb') as f:
                     encoded_content = base64.b64encode(f.read()).decode('utf-8')
@@ -169,7 +169,7 @@ def single_chart_discovery(chart: dict) -> dict:
                         }
                     }]
                 })
-            # Проверяю наличие resource-profiles directory
+            # Check for resource-profiles directory
             resource_profiles_path = os.path.join(chart_dir, chart['name'], "resource-profiles")
             if os.path.isdir(resource_profiles_path):
                 profile_files = [f for f in os.listdir(resource_profiles_path) if os.path.isfile(os.path.join(resource_profiles_path, f)) and f.endswith(('.yaml', '.yml', '.json'))]
@@ -203,7 +203,7 @@ def single_chart_discovery(chart: dict) -> dict:
         except Exception as e:
             print(f"Error processing helm chart component {chart.get('name', 'unknown')}: {e}", file=sys.stderr)
         finally:
-            # Удаляю директорию чарта
+            # Delete chart directory
             if os.path.isdir(chart_dir):
                 subprocess.run(f"rm -rf {chart_dir}", shell=True)
         return chart

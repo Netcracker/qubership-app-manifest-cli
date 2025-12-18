@@ -1,8 +1,8 @@
-# Здесь происходит наполнение данных о компоненте с mime-type application/vnd.qubership.standalone-runnable
-# Входные данные:
-# - путь к каталогу с файлами конфигурации (.yaml или .yml или .json)
-# - dict компоненты, в которую нужно добавить вложенные объекты с конфигурациями
-# Выходные данные: dict вида
+# Here the data is populated for a component with mime-type application/vnd.qubership.standalone-runnable
+# Input data:
+# - path to directory with configuration files (.yaml or .yml or .json)
+# - component dict to which nested objects with configurations need to be added
+# Output data: dict of the form
     # {
     #   "bom-ref": "qubership-jaeger:61439aff-c00d-43f5-9bae-fe6db05db2d5",
     #   "type": "application",

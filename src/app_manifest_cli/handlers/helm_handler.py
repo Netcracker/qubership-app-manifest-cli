@@ -3,7 +3,7 @@ from ..commands.create import get_bom_ref
 
 def handle(obj: dict) -> dict:
 
-    # DAO Тут можно добавить логику обработки входящего json Helm Chart
+    # DAO Here you can add logic for processing incoming json Helm Chart
     CHART_REQUIRED_FIELDS = [
         "type",
         "mime-type",

@@ -28,7 +28,7 @@ pip install .
 
 The `generate` command creates an application manifest based on a [configuration file](./example/jaeger/qubership-jaeger-am-build.yaml) and, if needed, [additional component files](./example/jaeger/).
 
-### Синтаксис
+### Syntax
 
 ```bash
 python -m venv venv

@@ -28,18 +28,18 @@ def generate_command(
         if out == None:
             out = name + '-' + version + '.json'
         body = create_command(name=name, version=version, out=open(out, "w"))
-        # Получаю компоненты из конфига -- именно они определяют состав манифеста
+        # Get components from config -- they define the manifest composition
         config_components = get_components_from_data(configuration_data)
-        # Получаю депенденси из конфига
+        # Get dependencies from config
         config_dependencies = load_dependencies(config_components)
-        # Читаю все json файлы с компонентами
+        # Read all JSON files with components
         json_components = []
         if components_files:
             for json_path in components_files:
                 with open(json_path.resolve(), "r", encoding="utf-8") as f:
                     json_comp = json.load(f)
                     json_components.append(json_comp)
-        # Перебираю компоненты из конфига, если в json_components есть такой же, то обновляю его
+        # Iterate through components from config, if the same exists in json_components, then update it
         components = []
         for conf_comp in config_components:
             conf_comp['mime-type'] = conf_comp["mimeType"]
@@ -52,16 +52,16 @@ def generate_command(
                 conf_comp["bom-ref"] = get_bom_ref(conf_comp["name"])
             components.append(conf_comp)
 
-        # Генерирую дополнительные метаданные для helm chart
-        #   добавляю properies с именем qubership:helm.values.artifactMappings
-        #   и значением в виде dict, где ключ - bom-ref зависимости, а значение - dict с ключом valuesPathPrefix и значением из конфигурации
+        # Generate additional metadata for helm chart
+        #   add properties named qubership:helm.values.artifactMappings
+        #   with value as a dict, where key is bom-ref of dependency, and value is a dict with valuesPathPrefix key and value from configuration
 
         components = generate_helm_values_artifact_mappings(components)
-        # Если включено discovery, то запускаю его
-        # дополняя компоненты зависимостями и свойствами
+        # If discovery is enabled, run it
+        # enriching components with dependencies and properties
         # if discovery:
         components = helm_discovery(components)
-        # Добавляю все компоненты в манифест
+        # Add all components to the manifest
         for comp in components:
             if comp.get("mime-type") == "application/vnd.qubership.standalone-runnable":
                 if comp.get("version", "") == "":
@@ -69,7 +69,7 @@ def generate_command(
             typer.echo(f"Adding component: {comp['name']} with mime-type: {comp['mime-type']}")
             #typer.echo(f"comp details: {json.dumps(comp, indent=2)}")
             _add_component(manifest_path=out, payload_text=json.dumps(obj=comp,sort_keys=True), out_file=None)
-        # Формирую простой список компонент для удобства поиска
+        # Form a simple list of components for easy search
         components_list = [ comp["mime-type"] + ":" + comp["name"] for comp in components]
         for dep in config_dependencies:
             dep_record = {}
@@ -117,11 +117,11 @@ def load_configuration(configuration: str) -> dict:
     #     raise ValueError("Configuration file must contain 'dependencies' section")
     return configuration_data
 
-# Здесь я предполагаю, что в конфиге dependencies описываются внутри каждого компонента
-# в виде списка dependsOn, где каждый элемент содержит name и mime-type
-# Преобразую это в список словарей с ключами name, ref и dependsOn
-# ref - это mime-type:name
-# dependsOn - это список ref зависимостей
+# Here I assume that in the config dependencies are described inside each component
+# in the form of dependsOn list, where each element contains name and mime-type
+# Transform this into a list of dictionaries with keys name, ref and dependsOn
+# ref is mime-type:name
+# dependsOn is a list of dependency refs
 def load_dependencies(config_data: dict) -> List:
     deps = []
     for comp in config_data:
@@ -139,15 +139,15 @@ def load_dependencies(config_data: dict) -> List:
             deps.append({"name": deps_elem_name, "ref": deps_elem_ref, "dependsOn": deps_elem_depends_on})
     return deps
 
-# Функция, которая получает на вход список компонент из манифеста (чтобы найти bom-ref по имени)
-# Что она делает:
-# 1. если mime-type компоненты == application/vnd.qubership.helm.chart
-# 2. если у компонента есть dependsOn, то перебирает все зависимости и проверяет есть ли у каждой зависимости параметр valuesPathPrefix
-# 3. если есть, то создаёт dict с ключами:
-# "name": "qubership:helm.values.artifactMappings" и
-# "value": {"bom-ref зависимости": {"valuesPathPrefix": "значение из зависимости"}, ...}
-# 4. добавляет этот dict в properties компонента
-# 5. возвращает обновлённый список компонентов
+# Function that receives a list of components from the manifest (to find bom-ref by name)
+# What it does:
+# 1. if component mime-type == application/vnd.qubership.helm.chart
+# 2. if the component has dependsOn, iterate through all dependencies and check if each dependency has valuesPathPrefix parameter
+# 3. if yes, create a dict with keys:
+# "name": "qubership:helm.values.artifactMappings" and
+# "value": {"dependency bom-ref": {"valuesPathPrefix": "value from dependency"}, ...}
+# 4. add this dict to component properties
+# 5. return the updated list of components
 def generate_helm_values_artifact_mappings(manifest_components: List[dict]) -> dict | None:
     components = []
     for component in manifest_components:
@@ -162,7 +162,7 @@ def generate_helm_values_artifact_mappings(manifest_components: List[dict]) -> d
             if "valuesPathPrefix" in dep:
                 dep_name = dep.get("name")
                 dep_mime = dep.get("mimeType", dep.get("mime-type"))
-                # Ищу в manifest_components компонент с таким же name и mime-type, чтобы взять его bom-ref
+                # Search in manifest_components for a component with the same name and mime-type to get its bom-ref
                 matching_comp = next((comp for comp in manifest_components if comp["name"] == dep_name and comp["mime-type"] == dep_mime), None)
                 print(f"  Processing dependency: {dep_name}, found matching component: {matching_comp is not None}")
                 if matching_comp and "bom-ref" in matching_comp:
