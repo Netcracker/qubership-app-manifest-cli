@@ -55,6 +55,7 @@ runs:
         pattern: "*.json"
 
     - name: Collect metadata files
+      shell: bash
       if: ${{ inputs.download-metadata-files }}
       run: |
         meta_data_files=""
