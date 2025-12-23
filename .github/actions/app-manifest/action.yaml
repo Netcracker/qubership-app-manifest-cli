@@ -1,6 +1,11 @@
 name: "Application manifest generation"
 
 inputs:
+  cli-version:
+    description: "The version of the qubership-app-manifest-cli to use"
+    required: false
+    type: string
+    default: "main"
   configuration:
     description: "The configuration file for the application manifest generation"
     required: true
@@ -18,14 +23,13 @@ inputs:
     required: false
     type: string
   meta-data-files:
-    description: "Additional metadata files to include in the application manifest"
+    description: "Additional metadata files to include in the application manifest. Mutually exclusive with download-metadata-files"
     required: false
     type: string
-  cli-version:
-    description: "The version of the qubership-app-manifest-cli to use"
+  download-metadata-files:
+    description: "Whether to download metadata files from actions artifacts. Mutually exclusive with meta-data-files"
     required: false
-    type: string
-    default: "main"
+    type: boolean
 
 outputs:
   app-manifest-path:
@@ -40,10 +44,31 @@ runs:
         repository: netcracker/qubership-app-manifest-cli
         ref: "${{ inputs.cli-version }}"
         path: "app-manifest-cli"
+        persistent-credentials: false
+
+    - name: "Download metadata files"
+      if: ${{ inputs.download-metadata-files }}
+      uses: actions/download-artifact@v5
+      with:
+        path: "./cli/meta-data-files"
+        merge-multiple: true
+        pattern: "*.json"
+
+    - name: Collect metadata files
+      if: ${{ inputs.download-metadata-files }}
+      run: |
+        meta_data_files=""
+        for file in ./cli/meta-data-files/*.json; do
+          meta_data_files="$meta_data_files $file"
+        done
+        echo "[DEBUG] Metadata files: ${meta_data_files}"
+        echo "META_DATA_FILES=${meta_data_files}" >> $GITHUB_ENV
+
     - name: Configure Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
+
     - name: Install dependencies
       shell: bash
       working-directory: app-manifest-cli
@@ -52,6 +77,7 @@ runs:
         source venv/bin/activate
         python -m pip install --upgrade pip
         pip install .
+
     - name: "Generate application manifest"
       shell: bash
       working-directory: ${{ github.workspace }}
@@ -64,7 +90,7 @@ runs:
           $([[ -n "${{ inputs.output }}" ]] && echo "--output ${{ inputs.output }}") \
           $([[ -n "${{ inputs.version }}" ]] && echo "--version ${{ inputs.version }}") \
           $([[ -n "${{ inputs.name }}" ]] && echo "--name ${{ inputs.name }}") \
-          $([[ -n "${{ inputs.meta-data-files }}" ]] && echo "${{ inputs.meta-data-files }}")
+          $([[ -n "${{ inputs.meta-data-files }}" ]] && echo "${{ inputs.meta-data-files || env.META_DATA_FILES }}")
           if [[ -f "am.env" ]]; then
             echo "Sourcing am.env file"
             source am.env
@@ -74,6 +100,7 @@ runs:
           echo "Generated application manifest path: $PATH_APP_MANIFEST"
           # echo "PATH_APP_MANIFEST=$([[ -n '${{ inputs.output }}' ]] && echo '${{ inputs.output }}' || echo ${PATH_APP_MANIFEST})"
           echo "PATH_APP_MANIFEST=${PATH_APP_MANIFEST}" >> $GITHUB_OUTPUT
+
     - name: "Upload application manifest"
       if: ${{ always() && steps.generate_app_manifest.outputs.PATH_APP_MANIFEST }}
       uses: actions/upload-artifact@v4
