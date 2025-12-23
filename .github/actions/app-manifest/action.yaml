@@ -44,7 +44,7 @@ runs:
         repository: netcracker/qubership-app-manifest-cli
         ref: "${{ inputs.cli-version }}"
         path: "app-manifest-cli"
-        persistent-credentials: false
+        persist-credentials: false
 
     - name: "Download metadata files"
       if: ${{ inputs.download-metadata-files }}
@@ -91,7 +91,7 @@ runs:
           $([[ -n "${{ inputs.output }}" ]] && echo "--output ${{ inputs.output }}") \
           $([[ -n "${{ inputs.version }}" ]] && echo "--version ${{ inputs.version }}") \
           $([[ -n "${{ inputs.name }}" ]] && echo "--name ${{ inputs.name }}") \
-          $([[ -n "${{ inputs.meta-data-files }}" ]] && echo "${{ inputs.meta-data-files || env.META_DATA_FILES }}")
+          $([[ -n "${{ inputs.meta-data-files || env.META_DATA_FILES }}" ]] && echo "${{ inputs.meta-data-files || env.META_DATA_FILES }}")
           if [[ -f "am.env" ]]; then
             echo "Sourcing am.env file"
             source am.env
